@@ -1,12 +1,9 @@
 [submodule "configs/MuCollConfig"]
 	path = configs/MuCollConfig
-	url = https://github.com/MuonColliderSoft/MuCollConfig.git
-	branch = main
+	url = git@github.com:ernesta57/MuCollConfig.git
 [submodule "configs/MAIAConfig"]
 	path = configs/MAIAConfig
-	url = https://github.com/MuonColliderSoft/MAIAConfig.git
-	branch = main
+	url = git@github.com:ernesta57/MAIAConfig.git
 [submodule "configs/MuSICConfig"]
 	path = configs/MuSICConfig
-	url = https://github.com/MuonColliderSoft/MuSICConfig.git
-	branch = main
+	url = git@github.com:ernesta57/MuSICConfig.git
