@@ -41,12 +41,12 @@ import math
 
 # Validating the arguments
 if not args.overwrite and os.path.isfile(args.output):
-	raise FileExistsError(f'Output file already exists: {args.output:s}')
+    raise FileExistsError(f'Output file already exists: {args.output:s}')
 if (args.pt is None and args.p is None) or (args.pt is not None and args.p is not None):
-	raise RuntimeError('Exactly one of --pt or --p has to be specified')
+    raise RuntimeError('Exactly one of --pt or --p has to be specified')
 for pdg in args.pdg:
-	if pdg not in PDG_PROPS:
-		raise RuntimeError(f'Particle properties not defined for pdgId: {pdg}')
+    if pdg not in PDG_PROPS:
+        raise RuntimeError(f'Particle properties not defined for pdgId: {pdg}')
 
 
 # Generating sampling distributions for each property (1 value/event)
@@ -54,32 +54,32 @@ sample_size = args.events
 rng = np.random.default_rng(args.seed)
 samples = {}
 configs = {
-	'dt': args.dt,
-	'dz': args.dz,
-	'd0': args.d0,
-	'theta': args.theta,
-	'phi': args.phi
+    'dt': args.dt,
+    'dz': args.dz,
+    'd0': args.d0,
+    'theta': args.theta,
+    'phi': args.phi
 }
 if args.pt is not None:
-	configs['pt'] = args.pt
+    configs['pt'] = args.pt
 else:
-	configs['p'] = args.p
+    configs['p'] = args.p
 for name, values in configs.items():
-	if values is None:
-		continue
-	if not isinstance(values, list):
-		samples[name] = np.ones(sample_size) * values
-	elif len(values) == 1:
-		samples[name] = np.ones(sample_size) * values[0]
-	elif len(values) == 2:
-		samples[name] = rng.random(sample_size) * (values[1] - values[0]) + values[0]
-	elif len(values) == 3:
-		samples[name] = rng.normal(values[1], values[2], sample_size)
-	else:
-		raise ValueError(
-			f"Invalid number of values for '{name}': expected 1, 2, or 3, but got {len(values)}"
-		)
-		
+    if values is None:
+        continue
+    if not isinstance(values, list):
+        samples[name] = np.ones(sample_size) * values
+    elif len(values) == 1:
+        samples[name] = np.ones(sample_size) * values[0]
+    elif len(values) == 2:
+        samples[name] = rng.random(sample_size) * (values[1] - values[0]) + values[0]
+    elif len(values) == 3:
+        samples[name] = rng.normal(values[1], values[2], sample_size)
+    else:
+        raise ValueError(
+            f"Invalid number of values for '{name}': expected 1, 2, or 3, but got {len(values)}"
+        )
+        
 # Adding randomised phi angle for d0
 samples['dphi'] = rng.random(sample_size) * math.pi * 2.
 
@@ -94,10 +94,10 @@ frame.put_parameter('events', str(args.events))
 frame.put_parameter('particles/event', str(args.particles))
 frame.put_parameter('seed', str(args.seed))
 if args.comment:
-	frame.put_parameter('comment', args.comment)
+    frame.put_parameter('comment', args.comment)
 for name, values in configs.items():
-	header = str(values) if isinstance(values, list) else values
-	frame.put_parameter(name, str(header))
+    header = str(values) if isinstance(values, list) else values
+    frame.put_parameter(name, str(header))
 # wrt.writeRunHeader(run)
 writer.write_frame(frame, 'header')
 
@@ -110,57 +110,57 @@ n_pdgs = len(args.pdg)
 choose_random_pdg = True if args.particles != n_pdgs else False
 # Creating actual particles
 for e in range(args.events):
-	col = edm4hep.MCParticleCollection()
-	evt = podio.Frame()
-	evt.put_parameter("eventNumber", str(e))
+    col = edm4hep.MCParticleCollection()
+    evt = podio.Frame()
+    evt.put_parameter("eventNumber", str(e))
 
-	for p in range(args.particles):
-		pdg_idx = p
-		if choose_random_pdg:
-			pdg_idx = rng.choice(n_pdgs, 1)[0]
-		pdg = args.pdg[pdg_idx]
-		# Calculating all properties for this particle in the event
-		phi = math.radians(samples['phi'][e])
-		theta = math.radians(samples['theta'][e])
-		# Calculating momentum vector
-		if 'pt' in configs:
-			pt = samples['pt'][e]
-			px = pt * math.cos(phi)
-			py = pt * math.sin(phi)
-			pz = pt / math.tan(theta)
-		elif 'p' in configs:
-			p = samples['p'][e]
-			px = p * math.cos(phi) * math.sin(theta)
-			py = p * math.sin(phi) * math.sin(theta)
-			pz = p * math.cos(theta)
-		momentum = array('d', [px, py, pz])
-		# Calculating vertex position
-		vx = samples['d0'][e] / 10.0 * math.cos(samples['dphi'][e])
-		vy = samples['d0'][e] / 10.0 * math.sin(samples['dphi'][e])
-		vz = samples['dz'][e] / 10.0
-		vtx = array('d', [vx, vy, vz])
-		# Assigning properties to the MCParticle
-		mcp = col.create()
-		mcp.setGeneratorStatus(1)
-		mcp.setMass(PDG_PROPS[pdg][1])
-		mcp.setCharge(PDG_PROPS[pdg][0])
-		mcp.setPDG(pdg)
-		#mcp.setMomentum(momentum)
-		mcp.getMomentum().x = px
-		mcp.getMomentum().y = py
-		mcp.getMomentum().z = pz
-		#mcp.setVertex(vtx)
-		mcp.getVertex().x = vx
-		mcp.getVertex().y = vy
-		mcp.getVertex().z = vz
-		# Adding particle to the event
-		n_particles += 1
-	# Writing the event
-	n_events += 1
- 	if n_events % max(1, (args.events + 9) // 10) == 0:
-		print(f'Wrote event {n_events}/{args.events}')
-	evt.put(cppyy.gbl.std.move(col), "MCParticles")	
-	writer.write_frame(evt, 'events')
+    for p in range(args.particles):
+        pdg_idx = p
+        if choose_random_pdg:
+            pdg_idx = rng.choice(n_pdgs, 1)[0]
+        pdg = args.pdg[pdg_idx]
+        # Calculating all properties for this particle in the event
+        phi = math.radians(samples['phi'][e])
+        theta = math.radians(samples['theta'][e])
+        # Calculating momentum vector
+        if 'pt' in configs:
+            pt = samples['pt'][e]
+            px = pt * math.cos(phi)
+            py = pt * math.sin(phi)
+            pz = pt / math.tan(theta)
+        elif 'p' in configs:
+            p = samples['p'][e]
+            px = p * math.cos(phi) * math.sin(theta)
+            py = p * math.sin(phi) * math.sin(theta)
+            pz = p * math.cos(theta)
+        momentum = array('d', [px, py, pz])
+        # Calculating vertex position
+        vx = samples['d0'][e] / 10.0 * math.cos(samples['dphi'][e])
+        vy = samples['d0'][e] / 10.0 * math.sin(samples['dphi'][e])
+        vz = samples['dz'][e] / 10.0
+        vtx = array('d', [vx, vy, vz])
+        # Assigning properties to the MCParticle
+        mcp = col.create()
+        mcp.setGeneratorStatus(1)
+        mcp.setMass(PDG_PROPS[pdg][1])
+        mcp.setCharge(PDG_PROPS[pdg][0])
+        mcp.setPDG(pdg)
+        #mcp.setMomentum(momentum)
+        mcp.getMomentum().x = px
+        mcp.getMomentum().y = py
+        mcp.getMomentum().z = pz
+        #mcp.setVertex(vtx)
+        mcp.getVertex().x = vx
+        mcp.getVertex().y = vy
+        mcp.getVertex().z = vz
+        # Adding particle to the event
+        n_particles += 1
+    # Writing the event
+    n_events += 1
+    if n_events % max(1, (args.events + 9) // 10) == 0:
+        print(f'Wrote event {n_events}/{args.events}')
+    evt.put(cppyy.gbl.std.move(col), "MCParticles") 
+    writer.write_frame(evt, 'events')
 # Closing the output file
 #writer.finish()
 print(f'Wrote {n_particles} particles in {n_events} events to file: {args.output}')
